@@ -12,23 +12,29 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4  # Обновлено
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4  # Обновлено
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'  # Кэширование node_modules
+
+      - name: Clean npm cache and remove node_modules
+        run: |
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
 
       - name: Install dependencies
-        uses: bahmutov/npm-install@v1
+        run: npm install  # Используем чистую установку вместо bahmutov/npm-install
 
       - name: Build project
         run: npm run build
 
       - name: Upload production-ready build files
-        uses: actions/upload-artifact@v4  # Обновлено
+        uses: actions/upload-artifact@v4
         with:
           name: production-files
           path: ./dist
@@ -41,7 +47,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v4  # Обновлено
+        uses: actions/download-artifact@v4
         with:
           name: production-files
           path: ./dist
