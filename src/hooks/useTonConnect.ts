@@ -1,4 +1,4 @@
-import { Sender, SenderArguments } from "ton";
+import { Sender, SenderArguments } from "@ton/ton";
 import { useTonConnectUI } from "../external/hooks/useTonConnectUI";
 
 export function useTonConnect(): { sender: Sender; connected: boolean; } {
