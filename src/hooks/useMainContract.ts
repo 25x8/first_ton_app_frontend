@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTonClient } from "./useTonClient";
 import { Address, OpenedContract, toNano } from "@ton/core";
 import { useAsyncInitialize } from "./useAsyncInitialize";
@@ -31,6 +31,8 @@ export function useMainContract() {
     }, [client]);
 
     useEffect(() => {
+        let isMounted = true;
+
         async function getValue() {
                 if (!mainContract) return;
                 
@@ -39,30 +41,53 @@ export function useMainContract() {
                 const val = await mainContract.getData();
                 const contractBalance = await mainContract.getBalance();
 
-                setContractData({
-                    counter_value: val.number,
-                    recent_sender: val.recent_sender,
-                    owner_address: val.owner_address
-                })
+                if (isMounted) { 
+                    setContractData({
+                        counter_value: val.number,
+                        recent_sender: val.recent_sender,
+                        owner_address: val.owner_address
+                    })
 
-                setBalance(contractBalance.number);
-
+                    setBalance(contractBalance.number);
+                }
                 await sleep(5000);
 
+            if(isMounted) {
                 getValue();
+            }
 
         
         }
 
         getValue();
+
+        return () => {
+            isMounted = false;
+        }
     }, [mainContract])
+
+    const sendIncrement = useCallback(
+        async () => mainContract?.sendIncrement(sender, toNano('0.05'), 5),
+        [mainContract, sender]
+    );
+
+    const sendDeposit = useCallback(
+        async () => mainContract?.sendDeposit(sender, toNano('0.5')),
+        [mainContract, sender]
+    );
+
+    const sendWithdrawalRequest = useCallback(
+        async () => mainContract?.sendWithdrawalRequest(sender, toNano('0.05'), toNano('0.5')),
+        [mainContract, sender]
+    );
+
 
     return {
         contract_address: mainContract?.address.toString(),
         contract_balance: balance,
         ...contractData,
-        sendIncrement: async () => mainContract?.sendIncrement(sender, toNano('0.05'), 5),
-        sendDeposit: async () => mainContract?.sendDeposit(sender, toNano('0.5')),
-        sendWithdrawalRequest: async () => mainContract?.sendWithdrawalRequest(sender, toNano('0.05'), toNano('0.5'))
+        sendIncrement,
+        sendDeposit,
+        sendWithdrawalRequest
     };
 }
